@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"c:/Users/Playdata/Desktop/inflearn/ai_agent/app/main.py\":*)",
+      "Bash(\"c:/Users/Playdata/Desktop/inflearn/ai_agent/app/models.py\":*)",
+      "Bash(\"c:/Users/Playdata/Desktop/inflearn/ai_agent/app/schemas.py\":*)",
+      "Bash(\"c:/Users/Playdata/Desktop/inflearn/ai_agent/app/schemas/__init__.py\":*)",
+      "Bash(\"c:/Users/Playdata/Desktop/inflearn/ai_agent/app/routers/chat.py\":*)",
+      "Bash(\"c:/Users/Playdata/Desktop/inflearn/ai_agent/app/ai/1_classification/classification_list.py\":*)",
+      "Bash(\"c:/Users/Playdata/Desktop/inflearn/ai_agent/app/ai/__init__.py\":*)",
+      "Bash(\"c:/Users/Playdata/Desktop/inflearn/ai_agent/app/ai/classification/classification_list.py\":*)"
+    ]
+  }
+}

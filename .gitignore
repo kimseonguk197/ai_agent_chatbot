@@ -1,0 +1,34 @@
+# 가상환경
+.venv/
+venv/
+env/
+
+# # 환경변수 (보안)
+# .env
+
+# Python 캐시
+__pycache__/
+*.py[cod]
+*.pyo
+
+# 빌드/배포
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 로그
+*.log
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/

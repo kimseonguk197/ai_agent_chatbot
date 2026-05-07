@@ -1,0 +1,14 @@
+# webserver
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+python-jose[cryptography]
+bcrypt
+python-dotenv
+pydantic[email]
+
+# ai tool
+openai
+psycopg2-binary 
+pgvector
