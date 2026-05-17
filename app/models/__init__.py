@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Enum
 from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 from app.database import Base
 import enum
 
@@ -62,5 +63,5 @@ class Chat(Base):
     request = Column(String, nullable=False)
     response = Column(String, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-
     member = relationship("Member", back_populates="chats")
+

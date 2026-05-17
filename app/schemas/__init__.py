@@ -86,3 +86,11 @@ class ChatResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# Document
+class DocumentCreate(BaseModel):
+    texts: list[str]
+
+class DocumentResponse(BaseModel):
+    added: int

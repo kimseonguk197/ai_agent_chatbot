@@ -1,14 +1,24 @@
 # webserver
 fastapi
 uvicorn[standard]
-sqlalchemy
-psycopg2-binary
-python-jose[cryptography]
-bcrypt
-python-dotenv
-pydantic[email]
+sqlalchemy # ORM
+psycopg2-binary # PostgreSQL driver 
+python-jose[cryptography] # JWT encode/decode
+bcrypt # password hashing
+python-dotenv # load .env
+pydantic[email] # data validation
 
 # ai tool
-openai
-psycopg2-binary 
-pgvector
+openai # OpenAI API client
+pgvector # vector similarity search extension for PostgreSQL
+langchain # LLM orchestration framework
+langchain-openai  # LangChain + OpenAI integration
+langchain-postgres # LangChain + PostgreSQL vector store
+langchain-text-splitters # LangChain chunking utility
+langchain-community # BM25Retriever 
+rank-bm25 # BM25 algorithm (langchain-community BM25Retriever related)
+notion-client # Notion API client
+
+# Redis cache
+redis[hiredis] 
+numpy
