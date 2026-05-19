@@ -1,9 +1,6 @@
 import os
-from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
 from langchain_postgres import PGVector
-
-load_dotenv()
 
 # langchain_postgres는 psycopg3 드라이버 사용 (postgresql+psycopg://)
 _DATABASE_URL = os.getenv("DATABASE_URL", "").replace(

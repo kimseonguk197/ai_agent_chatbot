@@ -21,8 +21,8 @@ def load_chat_history(member_id: int, db: Session, limit: int = MEMORY_WINDOW) -
     )
 
     messages = []
-    # 반환값: [HumanMessage, AIMessage, HumanMessage, AIMessage] 형태의 리스트
-    for chat in reversed(recent_chats):  # 시간 오름차순 (오래된 것부터)
+    # 반환값: [HumanMessage, AIMessage, HumanMessage, AIMessage] 형태의 리스트로 변환
+    for chat in reversed(recent_chats):  # 앞의 5개 중 오래된 것부터
         # 명확한 응답을 위해 두 주체의 대화의 구분이 필요
         # HumanMessage : 사용자가 보낸 메시지, AIMessage : AI(LLM)가 응답했던 메시지
         messages.append(HumanMessage(content=chat.request))

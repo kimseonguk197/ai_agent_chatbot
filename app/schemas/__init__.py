@@ -94,3 +94,10 @@ class DocumentCreate(BaseModel):
 
 class DocumentResponse(BaseModel):
     added: int
+
+class DocumentChunk(BaseModel):
+    id: str       # langchain_pg_embedding의 UUID
+    content: str  # 청크 텍스트 내용
+
+class DocumentChunkUpdate(BaseModel):
+    text: str     # 수정할 새 텍스트 (기존 청크를 삭제하고 재임베딩 후 저장)

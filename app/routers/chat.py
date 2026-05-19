@@ -6,7 +6,9 @@ from app.models import RoleEnum
 from app.dependencies import get_db, get_current_member
 from app.ai.classification.llm_calling import classify_message, generate_response
 from app.ai.rag.retriever import search_policy
-from app.ai.rag.llm_calling_langchain import generate_response_with_memory
+from app.ai.rag.llm_calling_langchain import classify_message_langchain
+from app.ai.rag.llm_calling_langchain import generate_response_langchain_memory
+from app.ai.rag.llm_calling_langchain import generate_response_langchain
 from app.ai.rag.memory import load_chat_history
 from app.routers.order import my_orders
 
@@ -31,47 +33,44 @@ def create_chat(
     db: Session = Depends(get_db),
     current_member: models.Member = Depends(get_current_member),
 ):
-    # Redis에서 유사한 질문의 응답을 검색 (LLM 호출 없이 즉시 반환)
-    # 히트 시: 즉시 응답 및 ttl 갱신
-    # 미스 시: 아래 분기 처리로 진행
+    # 같은질문에 대한 캐싱 : redis stack에 같은 질문이 이력이 있는지 검색
+    cached_response = semantic_cache.search(body.message, current_member.id)
 
-    cached_response = semantic_cache.search(body.message)
-
+    # 히트 시: redis에 저장된 값으로 즉시 응답
+    # 미스 시: 아래 else 분기 처리로 진행
     if cached_response:
         response_text = cached_response
 
     else:
         action = classify_message(body.message)
-
+        print(action)
         if action == "get_my_orders":
-            # 개인화 데이터: 캐시 저장 안 함 (사용자마다 다른 응답)
             orders = my_orders(db=db, current_member=current_member)
+            print(orders)
             data = _format_orders(orders)
-            response_text = generate_response(body.message, data)
-
-        elif action == "get_policy":
-            context = search_policy(body.message)
-            if context is None:
-                response_text = "요청하실수 없는 작업입니다."
-            else:
-                # Window Memory: 최근 5턴 대화 기록을 함께 전달
-                history = load_chat_history(current_member.id, db)
-                response_text = generate_response_with_memory(body.message, context, history)
-
-                # 정책 응답 Semantic Cache에 저장
-                semantic_cache.store(body.message, response_text)
-
-        elif action == "make_document" and current_member.role != RoleEnum.employee:
-            response_text = "요청하실수 없는 작업입니다."
-
+            print(data)
+            # response_text = generate_response(body.message, data)
+            response_text = generate_response_langchain(body.message, data)
+            
         else:
-            response_text = action
+            context = search_policy(body.message)
+            # response_text = generate_response(body.message, context)
+            # response_text = generate_response_langchain(body.message, context)
+            # 최근대화고려 작업(Window Memory): 응답시 최근 5턴 대화 기록을 함께 전달
+            history = load_chat_history(current_member.id, db)
+            response_text = generate_response_langchain_memory(body.message, context, history)
+
+        # 같은질문에 대한 캐싱 : redis stack에 질문/응답을 저장
+        # store: member_id 포함 (flush_by_member로 사용자별 선택 삭제 가능)
+        semantic_cache.store(body.message, response_text, current_member.id)
+
 
     chat_record = models.Chat(
         member_id=current_member.id,
         request=body.message,
         response=response_text,
     )
+
     db.add(chat_record)
     db.commit()
     db.refresh(chat_record)

@@ -17,6 +17,7 @@ def search_policy(query: str) -> str | None:
     for doc, score in results:
         print(f"{score:.4f} | {doc.page_content}")
     relevant = [doc.page_content for doc, score in results if score >= SIMILARITY_THRESHOLD]
+    print(relevant)
     if not relevant:
         return None
     return "\n".join(relevant)
@@ -61,6 +62,8 @@ def search_policy(query: str) -> str | None:
 
 def _reciprocal_rank_fusion(results_lists: list, k: int = 60) -> list:
     # RRF 알고리즘: 각 retriever의 순위를 1/(rank+k) 점수로 변환 후 합산
+    # 예를 들어)dense를 통한 top3가 문서A,D,C BM25를 통한 문서순위가 B,A,C 이렇다면,
+    
     # k=60은 RRF 논문에서 권장하는 기본값 (상위 랭크에 과도한 가중치 방지)
     scores: dict = {}
     for results in results_lists:
