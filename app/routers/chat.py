@@ -11,8 +11,10 @@ from app.ai.rag.llm_calling_langchain import generate_response_langchain_memory
 from app.ai.rag.llm_calling_langchain import generate_response_langchain
 from app.ai.rag.memory import load_chat_history
 from app.routers.order import my_orders
+from app.routers.member import my_page
 
 from app.ai.rag.semantic_cache import semantic_cache
+from app.ai.sllm_pinetunning.sllm_model_request import generate_response_sllm
 
 router = APIRouter(prefix="/chats", tags=["chat"])
 
@@ -25,6 +27,12 @@ def _format_orders(orders: list) -> str:
         for o in orders
     ]
     return "\n".join(lines)
+
+
+def _format_profile(member: list) -> str:
+    if not member:
+        return "회원정보가 없습니다."
+    return f"- 회원번호: {member.id} / email: {member.email} / 회원명: {member.name} "
 
 
 @router.post("", response_model=schemas.ChatResponse, status_code=status.HTTP_201_CREATED)
@@ -51,7 +59,18 @@ def create_chat(
             print(data)
             # response_text = generate_response(body.message, data)
             response_text = generate_response_langchain(body.message, data)
-            
+
+
+        # 민감정보의 경우 sLLM을 통해 응답생성
+        elif action == "get_my_profile":
+            member = my_page(current_member=current_member)
+            print(member)
+            data = _format_profile(member)
+            print(data)
+            response_text = generate_response_sllm(body.message, data)
+        
+
+
         else:
             context = search_policy(body.message)
             # response_text = generate_response(body.message, context)

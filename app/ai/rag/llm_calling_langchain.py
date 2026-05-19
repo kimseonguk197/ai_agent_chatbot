@@ -64,3 +64,5 @@ def generate_response_langchain_memory(user_message: str, data: str, history: li
         "user_message": user_message,
         "history": history or [],  # None이면 빈 리스트로 폴백
     })
+
+
