@@ -22,3 +22,7 @@ notion-client # Notion API client
 # Redis cache
 redis[hiredis] 
 numpy
+
+# finetunning
+torch
+transformers
