@@ -61,17 +61,26 @@ def tunning_model_classify_message(user_message: str) -> str:
 
 OLLAMA_MODEL_NAME = "llama3.2:3b"
 OLLAMA_URL = "http://localhost:11434/api/generate"
-def base_model_classify_message(prompt):
+def base_model_classify_message(user_message: str) -> str:
+    prompt = (
+        "아래 질문을 읽고 반드시 다음 네 가지 중 하나만 출력해. 다른 말은 절대 하지 마.\n"
+        "- get_my_orders\n"
+        "- get_my_profile\n"
+        "- get_policy\n"
+        "- 응답불가합니다\n\n"
+        f"질문: {user_message}\n출력:"
+    )
     payload = {
         "model": OLLAMA_MODEL_NAME,
         "prompt": prompt,
         "stream": False
     }
-    try:
-        response = requests.post(OLLAMA_URL, json=payload)
-        return response.json().get("response", "Error: No response").strip()
-    except Exception as e:
-        return f"Ollama 연결 실패: {e}"
+    response = requests.post(OLLAMA_URL, json=payload)
+    raw = response.json().get("response", "").strip()
+    for label in VALID_LABELS:
+        if label in raw:
+            return label
+    return "응답불가합니다"
 
 
 if __name__ == "__main__":
