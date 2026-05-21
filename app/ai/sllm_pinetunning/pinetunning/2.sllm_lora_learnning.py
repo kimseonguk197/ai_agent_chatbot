@@ -9,7 +9,7 @@ from huggingface_hub import login
 
 # 0. 기본 환경 설정
 MODEL_ID = "meta-llama/Llama-3.2-3B-Instruct"
-DATA_PATH = "train_style.jsonl"
+DATA_PATH = "train_classification.jsonl"
 
 ADAPTER_DIR = "./llama32-3b-style-lora"
 MERGED_DIR = "./llama32-3b-style-merged"

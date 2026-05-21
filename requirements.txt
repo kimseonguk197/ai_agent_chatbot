@@ -26,3 +26,4 @@ numpy
 # finetunning
 torch
 transformers
+accelerate 
