@@ -1,5 +1,6 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
+import requests
 
 VALID_LABELS = ["get_my_orders", "get_my_profile", "get_policy"]
 BASE_MODEL_ID = "meta-llama/Llama-3.2-3B-Instruct"
@@ -21,7 +22,7 @@ model = AutoModelForCausalLM.from_pretrained(
 model.eval()
 
 # 병합(lora) 모델 답변 생성하기
-def tunnig_classifier(user_message: str) -> str:
+def tunning_model_classify_message(user_message: str) -> str:
     prompt = (
         "아래 질문을 읽고 반드시 다음 네 가지 중 하나만 출력해. 다른 말은 절대 하지 마.\n"
         "- get_my_orders\n"
@@ -56,3 +57,24 @@ def tunnig_classifier(user_message: str) -> str:
             return label
 
     return "응답불가합니다"
+
+
+OLLAMA_MODEL_NAME = "llama3.2:3b"
+OLLAMA_URL = "http://localhost:11434/api/generate"
+def base_model_classify_message(prompt):
+    payload = {
+        "model": OLLAMA_MODEL_NAME,
+        "prompt": prompt,
+        "stream": False
+    }
+    try:
+        response = requests.post(OLLAMA_URL, json=payload)
+        return response.json().get("response", "Error: No response").strip()
+    except Exception as e:
+        return f"Ollama 연결 실패: {e}"
+
+
+if __name__ == "__main__":
+    print(tunning_model_classify_message("배송비 무료 조건이 뭐야?"))
+    print(base_model_classify_message("배송비 무료 조건이 뭐야?"))
+
