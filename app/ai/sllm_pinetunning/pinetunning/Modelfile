@@ -1,8 +1,11 @@
-FROM ./llama32-1b-style-merged
+FROM ./llama32-3b-style-merged
 
-PARAMETER temperature 0.7
-PARAMETER top_p 0.9
-PARAMETER repeat_penalty 1.1
-PARAMETER num_ctx 2048
+PARAMETER temperature 0
+PARAMETER num_ctx 512
+PARAMETER num_predict 32
 
-SYSTEM """now, you are llama-brad model"""
+SYSTEM """아래 질문을 읽고 반드시 다음 네 가지 중 하나만 출력해. 다른 말은 절대 하지 마.
+- get_my_orders
+- get_my_profile
+- get_policy
+- 응답불가합니다"""

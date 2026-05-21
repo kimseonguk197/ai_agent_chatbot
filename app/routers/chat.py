@@ -97,7 +97,7 @@ def create_chat(
 
 
 from app.ai.sllm_pinetunning.sllm_classification import sllm_classifier
-from app.ai.sllm_pinetunning.pinetunning.tunning_model_test import tunnig_classifier
+from app.ai.sllm_pinetunning.pinetunning.tunning_model_ollama_test import tunnig_classifier
 
 @router.post("/tunning")
 def create_chat_tunning(
