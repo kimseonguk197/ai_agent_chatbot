@@ -24,11 +24,10 @@ model.eval()
 # 병합(lora) 모델 답변 생성하기
 def tunning_model_classify_message(user_message: str) -> str:
     prompt = (
-        "아래 질문을 읽고 반드시 다음 네 가지 중 하나만 출력해. 다른 말은 절대 하지 마.\n"
+        "아래 질문을 읽고 반드시 다음 세 가지 중 하나만 출력해. 다른 말은 절대 하지 마.\n"
         "- get_my_orders\n"
         "- get_my_profile\n"
-        "- get_policy\n"
-        "- 응답불가합니다\n\n"
+        "- get_policy\n\n"
         f"질문: {user_message}\n출력:"
     )
     messages = [{"role": "user", "content": prompt}]
@@ -63,11 +62,10 @@ OLLAMA_MODEL_NAME = "llama3.2:3b"
 OLLAMA_URL = "http://localhost:11434/api/generate"
 def base_model_classify_message(user_message: str) -> str:
     prompt = (
-        "아래 질문을 읽고 반드시 다음 네 가지 중 하나만 출력해. 다른 말은 절대 하지 마.\n"
+        "아래 질문을 읽고 반드시 다음 세 가지 중 하나만 출력해. 다른 말은 절대 하지 마.\n"
         "- get_my_orders\n"
         "- get_my_profile\n"
-        "- get_policy\n"
-        "- 응답불가합니다\n\n"
+        "- get_policy\n\n"
         f"질문: {user_message}\n출력:"
     )
     payload = {

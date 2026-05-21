@@ -94,3 +94,15 @@ def create_chat(
     db.commit()
     db.refresh(chat_record)
     return chat_record
+from app.ai.sllm_pinetunning.sllm_classification import sllm_classifier
+
+@router.post("/tunning")
+def create_chat_tunning(
+    body: schemas.ChatRequest,
+    db: Session = Depends(get_db),
+    current_member: models.Member = Depends(get_current_member),
+):
+    # tunning 분류기
+    action = sllm_classifier(body.message)
+    print(action)
+    return {"action": action}

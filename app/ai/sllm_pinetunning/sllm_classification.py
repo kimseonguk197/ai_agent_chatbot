@@ -8,8 +8,7 @@ def sllm_classifier(user_message: str) -> str:
         "아래 질문을 읽고 반드시 다음 네 가지 중 하나만 출력해. 다른 말은 절대 하지 마.\n"
         "- get_my_orders\n"
         "- get_my_profile\n"
-        "- get_policy\n"
-        "- 응답불가합니다\n\n"
+        "- get_policy\n\n"
         f"질문: {user_message}\n"
         "출력:"
     )
