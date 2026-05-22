@@ -83,6 +83,6 @@ def base_model_classify_message(user_message: str) -> str:
 
 
 if __name__ == "__main__":
-    print(tunning_model_classify_message("배송비 무료 조건이 뭐야?"))
-    print(base_model_classify_message("배송비 무료 조건이 뭐야?"))
+    print(tunning_model_classify_message("세금계산서 발행 가능해?"))
+    print(base_model_classify_message("세금계산서 발행 가능해?"))
 
