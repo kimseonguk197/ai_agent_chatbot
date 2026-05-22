@@ -5,7 +5,7 @@ VALID_LABELS = ["get_my_orders", "get_my_profile", "get_policy"]
 
 def sllm_classifier(user_message: str) -> str:
     prompt = (
-        "아래 질문을 읽고 반드시 다음 네 가지 중 하나만 출력해. 다른 말은 절대 하지 마.\n"
+        "아래 질문을 읽고 반드시 다음 세 가지 중 하나만 출력해. 다른 말은 절대 하지 마.\n"
         "- get_my_orders\n"
         "- get_my_profile\n"
         "- get_policy\n\n"
@@ -20,7 +20,7 @@ def sllm_classifier(user_message: str) -> str:
     )
     response.raise_for_status()
     raw = response.json()["response"].strip()
-
+    print(raw)
     # 후처리: 유효한 레이블 포함 여부 확인
     for label in VALID_LABELS:
         if label in raw:

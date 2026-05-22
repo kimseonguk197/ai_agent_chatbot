@@ -50,7 +50,7 @@ def tunning_model_classify_message(user_message: str) -> str:
         )
     
     raw = tokenizer.decode(outputs[0][input_tensor.shape[-1]:], skip_special_tokens=True).strip()
-
+    print(raw)
     for label in VALID_LABELS:
         if label in raw:
             return label
@@ -75,6 +75,7 @@ def base_model_classify_message(user_message: str) -> str:
     }
     response = requests.post(OLLAMA_URL, json=payload)
     raw = response.json().get("response", "").strip()
+    print(raw)
     for label in VALID_LABELS:
         if label in raw:
             return label
