@@ -50,7 +50,7 @@ def tunning_model_classify_message(user_message: str) -> str:
         )
     
     raw = tokenizer.decode(outputs[0][input_tensor.shape[-1]:], skip_special_tokens=True).strip()
-    print(raw)
+    print(f"  raw 출력: {raw}")
     for label in VALID_LABELS:
         if label in raw:
             return label
@@ -75,7 +75,7 @@ def base_model_classify_message(user_message: str) -> str:
     }
     response = requests.post(OLLAMA_URL, json=payload)
     raw = response.json().get("response", "").strip()
-    print(raw)
+    print(f"  raw 출력: {raw}")
     for label in VALID_LABELS:
         if label in raw:
             return label
@@ -83,6 +83,8 @@ def base_model_classify_message(user_message: str) -> str:
 
 
 if __name__ == "__main__":
+    print("[튜닝 모델] : ")
     print(tunning_model_classify_message("세금계산서 발행 가능해?"))
+    print("\n[베이스 모델] : ")
     print(base_model_classify_message("세금계산서 발행 가능해?"))
 
