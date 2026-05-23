@@ -32,6 +32,9 @@ class SemanticCache:
     # redis 연결 및 임베딩 모델 설정. pgvector에 저장되는 모델과 동일한 모델설정.
     def __init__(self):
         self._available = False
+        if os.getenv("USE_SEMANTIC_CACHE", "true").lower() == "false":
+            print("[SemanticCache] 비활성화 (USE_SEMANTIC_CACHE=false)")
+            return
         try:
             self.r = redis.Redis(
                 host=os.getenv("REDIS_HOST", "localhost"),
