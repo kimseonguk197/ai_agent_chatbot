@@ -17,7 +17,6 @@ def signup(body: schemas.MemberCreate, db: Session = Depends(get_db)):
         password=hash_password(body.password),
         name=body.name,
         age=body.age,
-        role=body.role,
     )
     db.add(member)
     db.commit()

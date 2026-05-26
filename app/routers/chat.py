@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.models import RoleEnum
 from app.dependencies import get_db, get_current_member
 from app.ai.classification.llm_calling import classify_message, generate_response
 from app.ai.rag.retriever import search_policy
@@ -19,22 +18,6 @@ from app.ai.sllm_pinetunning.sllm_model_request import generate_response_sllm
 router = APIRouter(prefix="/chats", tags=["chat"])
 
 
-def _format_orders(orders: list) -> str:
-    if not orders:
-        return "주문 내역이 없습니다."
-    lines = [
-        f"- 주문번호: {o.id} / 상품ID: {o.product_id} / 수량: {o.quantity} / 주문일: {o.created_at.strftime('%Y-%m-%d')}"
-        for o in orders
-    ]
-    return "\n".join(lines)
-
-
-def _format_profile(member: list) -> str:
-    if not member:
-        return "회원정보가 없습니다."
-    return f"- 회원번호: {member.id} / email: {member.email} / 회원명: {member.name} "
-
-
 @router.post("", response_model=schemas.ChatResponse, status_code=status.HTTP_201_CREATED)
 def create_chat(
     body: schemas.ChatRequest,
@@ -43,7 +26,6 @@ def create_chat(
 ):
     # 같은질문에 대한 캐싱 : redis stack에 같은 질문이 이력이 있는지 검색
     cached_response = semantic_cache.search(body.message, current_member.id)
-
     # 히트 시: redis에 저장된 값으로 즉시 응답
     # 미스 시: 아래 else 분기 처리로 진행
     if cached_response:
@@ -57,20 +39,16 @@ def create_chat(
             print(orders)
             data = _format_orders(orders)
             print(data)
-            # response_text = generate_response(body.message, data)
-            response_text = generate_response_langchain(body.message, data)
-
-
+            response_text = generate_response(body.message, data)
+            # response_text = generate_response_langchain(body.message, data)
         # 민감정보의 경우 sLLM을 통해 응답생성
         elif action == "get_my_profile":
             member = my_page(current_member=current_member)
             print(member)
             data = _format_profile(member)
             print(data)
-            response_text = generate_response_sllm(body.message, data)
-        
-
-
+            response_text = generate_response(body.message, data)
+            # response_text = generate_response_langchain(body.message, context)
         else:
             context = search_policy(body.message)
             # response_text = generate_response(body.message, context)
@@ -94,8 +72,28 @@ def create_chat(
     db.commit()
     db.refresh(chat_record)
     return chat_record
-from app.ai.sllm_pinetunning.sllm_classification import sllm_classifier
 
+
+def _format_orders(orders: list) -> str:
+    if not orders:
+        return "주문 내역이 없습니다."
+    lines = [
+        f"- 주문번호: {o.id} / 상품ID: {o.product_id} / 수량: {o.quantity} / 주문일: {o.created_at.strftime('%Y-%m-%d')}"
+        for o in orders
+    ]
+    return "\n".join(lines)
+
+
+def _format_profile(member: list) -> str:
+    if not member:
+        return "회원정보가 없습니다."
+    return f"- 회원번호: {member.id} / email: {member.email} / 회원명: {member.name} "
+
+
+
+
+
+from app.ai.sllm_pinetunning.sllm_classification import sllm_classifier
 @router.post("/tunning")
 def create_chat_tunning(
     body: schemas.ChatRequest,

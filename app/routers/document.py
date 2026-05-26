@@ -68,11 +68,11 @@ def upsert_document(chunk_id: str, body: schemas.DocumentChunkUpdate, db: Sessio
     # 새 UUID가 자동 부여됨 → 반환값으로 새 UUID를 확인 가능
     new_ids = vector_store.add_texts([body.text])
 
-    # 4. BM25 캐시 무효화 (Hybrid Search를 위해)
-    invalidate_bm25_cache()
-
-    # 5. Redis Semantic Cache flush
+    # 4. Redis Semantic Cache flush
     # 청크 내용이 바뀌면 기존 캐시 응답이 outdated 될 수 있으므로 전체 삭제
     semantic_cache.flush()
+
+    # BM25 캐시 무효화 (Hybrid Search를 위해)
+    # invalidate_bm25_cache()
 
     return {"id": new_ids[0], "content": body.text}

@@ -6,11 +6,6 @@ from app.database import Base
 import enum
 
 
-class RoleEnum(str, enum.Enum):
-    user = "user"
-    employee = "employee"
-
-
 class Member(Base):
     __tablename__ = "members"
 
@@ -19,7 +14,6 @@ class Member(Base):
     password = Column(String, nullable=False)
     name = Column(String, nullable=True)
     age = Column(Integer, nullable=True)
-    role = Column(Enum(RoleEnum), nullable=False, default=RoleEnum.user)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     products = relationship("Product", back_populates="registrant")

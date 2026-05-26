@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr
-from app.models import RoleEnum
 
 
 # Member
@@ -10,7 +9,6 @@ class MemberCreate(BaseModel):
     password: str
     name: Optional[str] = None
     age: Optional[int] = None
-    role: RoleEnum = RoleEnum.user
 
 
 class MemberResponse(BaseModel):
@@ -18,7 +16,6 @@ class MemberResponse(BaseModel):
     email: str
     name: Optional[str] = None
     age: Optional[int] = None
-    role: RoleEnum
     created_at: datetime
 
     class Config:
