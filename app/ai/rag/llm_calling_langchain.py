@@ -17,8 +17,8 @@ llm_response = ChatOpenAI(
 )
 
 # langchain에서는 아래와 같이 모델만 변경하면 쉽게 코드 리팩토링 가능 
-# llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro")
-# llm = ChatAnthropic(model="claude-opus-4-5")
+# llm_classify = ChatGoogleGenerativeAI(model="gemini-1.5-pro")
+# llm_classify = ChatAnthropic(model="claude-opus-4-5")
 # 모델이 바뀌어도 bind_tools(), invoke(), StrOutputParser() 등 나머지 코드는 그대로 사용 가능
 llm_with_tools = llm_classify.bind_tools(TOOLS)
 

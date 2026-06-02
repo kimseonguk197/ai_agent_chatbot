@@ -18,7 +18,7 @@ embeddings = OpenAIEmbeddings(
     
 vector_store = PGVector(
     embeddings=embeddings,
-    collection_name="documents",
     connection=_DATABASE_URL,
+    collection_name="documents",
     use_jsonb=True,
 )

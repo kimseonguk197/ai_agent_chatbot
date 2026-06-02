@@ -13,7 +13,6 @@ def search_policy(query: str) -> str | None:
     # 장점: 의미적으로 유사한 문서를 찾음. "반품 어떻게 해?"로 검색해도 "환불 정책"을 찾아냄
     # 단점: 정확한 키워드가 있어도 벡터 거리가 멀면 놓칠 수 있음
     results = vector_store.similarity_search_with_relevance_scores(query, k=3)
-    print(results)
     for doc, score in results:
         print(f"{score:.4f} | {doc.page_content}")
     relevant = [doc.page_content for doc, score in results if score >= SIMILARITY_THRESHOLD]

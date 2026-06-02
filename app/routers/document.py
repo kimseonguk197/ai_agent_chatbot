@@ -15,23 +15,23 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 
 @router.post("", response_model=schemas.DocumentResponse, status_code=status.HTTP_201_CREATED)
 def add_documents(body: schemas.DocumentCreate, db: Session = Depends(get_db)):
-    # 문서단위로 입력될 경우 : 문서단위, pdf, 노션 일경우
+    # 문서단위, pdf 등 문장 전체일경우
     # 입력된 텍스트들을 청크 단위로 분할
     # chunks = splitter.create_documents(body.texts)
     # chunk_texts = [chunk.page_content for chunk in chunks]
     chunk_texts = [chunk for chunk in body.texts]
 
     # 가장일반적인 문장저장 : vector_store.py의 vector_store를 활용하여 저장
-    # add_texts()는 내부적으로 임베딩 생성 + langchain_pg_embedding 테이블에 저장
+    # add_texts()는 임베딩 생성 + langchain_pg_embedding 테이블에 저장
     vector_store.add_texts(chunk_texts)
 
-    # 하이브리드 검색 : 새 문서 추가 시 BM25 캐시 무효화
-    invalidate_bm25_cache()  
+    # # 하이브리드 검색 : 새 문서 추가 시 BM25 캐시 무효화
+    # invalidate_bm25_cache()  
     return {"added": len(body.texts)}
 
 # 문서단위로 입력될 경우 : 청킹 설정
 # chunk_size: 청크 당 최대 글자 수
-# separators = ["\n\n", "\n", ". ", " ", ""] 이런 내부 매커니즘을 우선순위로 문장 split
+# ["\n\n", "\n", ". ", " ", ""] 이런 내부 매커니즘을 우선순위로 문장 split
 splitter = RecursiveCharacterTextSplitter(
     chunk_size=500,
     chunk_overlap=50,

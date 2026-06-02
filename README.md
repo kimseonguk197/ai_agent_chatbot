@@ -49,3 +49,8 @@ uvicorn app.main:app --reload
 - redis stack과 캐싱작업을 통해 같은 질문 토큰 최소화
 - 하이브리드 검색 : dense + sparse 를 통한 대규모 코퍼스에서의 검색효율향상
 
+
+## sLLM과 파인튜닝
+- 사용자 질의 분류 작업으로 sLLM 도입(llama3.2)
+- sLLM의 효과적 사용을 위해 lora 튜닝
+- 튜닝작업 및 실행의 경우 성능문제로 runpod환경에서 gpu PC로 진행
