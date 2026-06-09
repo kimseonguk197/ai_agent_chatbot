@@ -60,19 +60,16 @@ def load_base_model():
 
     return model
 
-# 4. 데이터 전처리
+# 4. 데이터 전처리 : 원본 컬럼(instruction, response) 제거 및 구조 변경
 def load_and_prepare_dataset(tokenizer):
     dataset = load_dataset("json", data_files=DATA_PATH)["train"]
-
-    # 원본 컬럼(instruction, response) 제거, text 컬럼만 유지
     dataset = dataset.map(
         lambda x: build_text(x, tokenizer),
         remove_columns=dataset.column_names
     )
     return dataset
-# 4. 데이터 전처리
+
 def build_text(example, tokenizer):
-    # 기존 instruction / response 형식에  새로운 text 컬럼을 추가
     messages = [
         {"role": "user", "content": example["instruction"]},
         {"role": "assistant", "content": example["response"]},

@@ -8,7 +8,7 @@ from redis.commands.search.index_definition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 from langchain_openai import OpenAIEmbeddings
 
-# 기본 TTL: 24시간. 캐시 히트 시마다 갱신
+# TTL: 24시간 설정. 캐시 히트 시마다 갱신
 CACHE_TTL = int(os.getenv("SEMANTIC_CACHE_TTL", 86400))
 
 # 이후 변경될 데이터의 캐시 반환 방지를 위해 RAG(0.4)보다 임계치 훨씬 높게 설정
@@ -27,9 +27,10 @@ INDEX_NAME = "idx:semantic_cache"
 VECTOR_DIM = 3072
 
 # Redis Stack 기반 Semantic Cache
+# 초기화, 저장, 검색 함수로 구성
 class SemanticCache:
 
-    # redis 연결 및 임베딩 모델 설정. pgvector에 저장되는 모델과 동일한 모델설정.
+    # 초기화함수 : redis 연결, 임베딩 모델 설정, 인덱스 구성 
     def __init__(self):
         self._available = False
         if os.getenv("USE_SEMANTIC_CACHE", "true").lower() == "false":
@@ -42,6 +43,7 @@ class SemanticCache:
                 decode_responses=False,
             )
             self.r.ping()  # 연결확인
+            # pgvector에 저장되는 모델과 동일한 모델설정.
             self.embeddings = OpenAIEmbeddings(
                 model="text-embedding-3-large",
                 api_key=os.getenv("OPENAI_API_KEY"),
@@ -53,57 +55,26 @@ class SemanticCache:
                         # Redis 미실행 시에도 서버가 정상 동작하도록
             print(f"[SemanticCache] Redis 연결 실패 → 캐시 없이 동작: {e}")
 
-    # 순서
-    # 1. 모든 질문을 임베딩 벡터로 변환
-    # 2. Redis에서 유사한 질문 벡터 검색
-    # 3. 유사도 >= CACHE_THRESHOLD 이면 저장된 응답 반환(캐시 HIT)
-    # 4. 캐시 히트 시 TTL 갱신 (Sliding TTL)
-    def search(self, question: str, member_id: int) -> str | None:
-        # 해당 사용자의 캐시에서만 검색
-        if not self._available:
-            return None
+
+    def _ensure_index(self):
         try:
-            query_embedding = self._embed(question)
-
-            # 아래 쿼리는 Redis Stack(RediSearch)의 고유 문법
-            q = (
-                Query(f"(@member_id:{{{member_id}}})=>[KNN 1 @question_embedding $vec AS score]")
-                .sort_by("score")
-                .return_fields("response", "score")
-                .dialect(2)
+            self.r.ft(INDEX_NAME).create_index(
+                fields=[
+                    TextField("question"),
+                    TextField("response"),
+                    TagField("member_id"),
+                    VectorField(
+                        "question_embedding",
+                        "FLAT",
+                        {"TYPE": "FLOAT32", "DIM": VECTOR_DIM, "DISTANCE_METRIC": "COSINE"},
+                    ),
+                ],
+                definition=IndexDefinition(prefix=[CACHE_PREFIX], index_type=IndexType.HASH),
             )
-            results = self.r.ft(INDEX_NAME).search(
-                q, query_params={"vec": query_embedding}
-            )
+            print(f"[SemanticCache] 인덱스 생성 완료: {INDEX_NAME}")
+        except Exception:
+            pass  # 이미 존재하면 스킵
 
-            if not results.docs:
-                print(f"[SemanticCache] 검색 결과 없음 (member_id={member_id})")
-                return None
-
-            print(f"[SemanticCache] 검색 결과: {len(results.docs)}건, 최근접 문서 distance={results.docs[0].score}")
-
-            # 가장 높은 유사도의 데이터 1개만 선택
-            doc = results.docs[0]
-            # Redis COSINE distance는 거리를 의미하므로, similarity의 반대의미
-            distance = float(doc.score)
-            similarity = 1 - distance
-
-            print(f"[SemanticCache] 유사도: {similarity:.4f} (member_id={member_id})")
-
-            if similarity < CACHE_THRESHOLD:
-                print("[SemanticCache] 미스")
-                return None
-            
-            # ttl갱신
-            self.r.expire(doc.id, CACHE_TTL)
-            response = doc.response
-            if isinstance(response, bytes):
-                response = response.decode("utf-8")
-            return response
-
-        except Exception as e:
-            print(f"[SemanticCache] 검색 오류: {e}")
-            return None
 
     def store(self, question: str, response: str, member_id: int) -> None:
         if not self._available:
@@ -127,6 +98,60 @@ class SemanticCache:
 
         except Exception as e:
             print(f"[SemanticCache] 저장 오류: {e}")
+
+    def _embed(self, text: str) -> bytes:
+        vector = self.embeddings.embed_query(text)
+        return np.array(vector, dtype=np.float32).tobytes()
+
+    # 흐름
+    # 1. Redis에서 유사한 질문 벡터 검색
+    # 2. 유사도 >= 임계치(0.9) 이면 저장된 응답 반환(캐시 HIT)
+    # 3. 캐시 히트 시 TTL 갱신 (Sliding TTL)
+    def search(self, question: str, member_id: int) -> str | None:
+        # 해당 사용자의 캐시에서만 검색
+        if not self._available:
+            return None
+        try:
+            query_embedding = self._embed(question)
+
+            # 아래 쿼리는 Redis Stack(RediSearch)의 고유 문법
+            q = (
+                Query(f"(@member_id:{{{member_id}}})=>[KNN 1 @question_embedding $vec AS score]")
+                .sort_by("score")
+                .return_fields("response", "score")
+                .dialect(2)
+            )
+            results = self.r.ft(INDEX_NAME).search(
+                q, query_params={"vec": query_embedding}
+            )
+
+            if not results.docs:
+                print(f"[SemanticCache] 검색 결과 없음 (member_id={member_id})")
+                return None
+
+            # 가장 높은 유사도의 데이터 1개만 선택
+            doc = results.docs[0]
+            # Redis COSINE distance는 거리를 의미하므로, distance와 유사성은 반대의미
+            distance = float(doc.score)
+            similarity = 1 - distance
+
+            print(f"[SemanticCache] 유사도: {similarity:.4f} (member_id={member_id})")
+
+            if similarity < CACHE_THRESHOLD:
+                print("[SemanticCache] 미스")
+                return None
+            
+            # ttl갱신
+            self.r.expire(doc.id, CACHE_TTL)
+            response = doc.response
+            if isinstance(response, bytes):
+                response = response.decode("utf-8")
+            return response
+
+        except Exception as e:
+            print(f"[SemanticCache] 검색 오류: {e}")
+            return None
+
 
     # 특정 사용자의 캐시만 삭제.
     def flush_by_member(self, member_id: int) -> int:
@@ -156,28 +181,5 @@ class SemanticCache:
             print(f"[SemanticCache] flush 오류: {e}")
             return 0
 
-    def _embed(self, text: str) -> bytes:
-        vector = self.embeddings.embed_query(text)
-        return np.array(vector, dtype=np.float32).tobytes()
-
-
-    def _ensure_index(self):
-        try:
-            self.r.ft(INDEX_NAME).create_index(
-                fields=[
-                    TextField("question"),
-                    TextField("response"),
-                    TagField("member_id"),
-                    VectorField(
-                        "question_embedding",
-                        "FLAT",
-                        {"TYPE": "FLOAT32", "DIM": VECTOR_DIM, "DISTANCE_METRIC": "COSINE"},
-                    ),
-                ],
-                definition=IndexDefinition(prefix=[CACHE_PREFIX], index_type=IndexType.HASH),
-            )
-            print(f"[SemanticCache] 인덱스 생성 완료: {INDEX_NAME}")
-        except Exception:
-            pass  # 이미 존재하면 스킵
-# 모듈 로드 시 1회 초기화
+# 서버 최초 실행시 1회 초기화
 semantic_cache = SemanticCache()

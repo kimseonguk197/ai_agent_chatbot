@@ -48,9 +48,9 @@ def generate_response_langchain_memory(user_message: str, data: str, history: li
     prompt = ChatPromptTemplate.from_messages([
         (
             "system",
-            "사용자의 질문에 대해 아래 참고 데이터를 바탕으로 사용자의 질문에 핵심만 짧게 답변해. "
+            "사용자의 질문에 대해 아래 참고 데이터를 바탕으로 사용자의 질문에 답변해. "
             "이전 대화에서 답할 수 있는 내용이 있으면 그것을 우선으로 사용해."
-            "참고 데이터와 이전 대화 모두에서 관련 내용을 찾을 수 없는 경우에만 응답불가합니다 라고 답변해.\n\n"
+            "만약 참고 데이터와 이전 대화 모두에서 관련 내용을 찾을 수 없는 경우에만 응답불가합니다 라고 답변해.\n\n"
             "[참고 데이터]\n{data}"
         ),
         # history : 이전 대화 기록을 system과 현재 질문 사이에 삽입

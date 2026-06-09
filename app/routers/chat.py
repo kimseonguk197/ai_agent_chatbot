@@ -48,8 +48,7 @@ def create_chat(
             print(member)
             data = _format_profile(member)
             print(data)
-            # response_text = generate_response(body.message, data)
-            response_text = generate_response_langchain(body.message, context)
+            response_text = generate_response_sllm(body.message, data)
         else:
             context = search_policy(body.message)
             # response_text = generate_response(body.message, context)
@@ -58,7 +57,7 @@ def create_chat(
             history = load_chat_history(current_member.id, db)
             response_text = generate_response_langchain_memory(body.message, context, history)
 
-        # 같은질문에 대한 캐싱 : redis stack에 질문/응답을 저장
+        # redis stack에 질문/응답을 저장
         # store: member_id 포함 (flush_by_member로 사용자별 선택 삭제 가능)
         semantic_cache.store(body.message, response_text, current_member.id)
 
@@ -88,7 +87,7 @@ def _format_orders(orders: list) -> str:
 def _format_profile(member: list) -> str:
     if not member:
         return "회원정보가 없습니다."
-    return f"- 회원번호: {member.id} / email: {member.email} / 회원명: {member.name} "
+    return f"- 회원번호: {member.id} / email: {member.email} / 회원명: {member.name} / age: {member.age} "
 
 
 

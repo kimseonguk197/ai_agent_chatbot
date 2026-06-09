@@ -10,8 +10,7 @@ MEMORY_WINDOW = 5
 
 def load_chat_history(member_id: int, db: Session, limit: int = MEMORY_WINDOW) -> list:
 
-    # 테이블에서 특정 사용자의 최근 대화 기록을 LangChain 메시지 형식으로 반환
-    # 최신순으로 limit개 가져온 뒤, 역순 정렬하여 시간 오름차순으로 변환
+    # 테이블에서 특정 사용자의 최근 대화 기록 최신순으로 5개 조회
     recent_chats = (
         db.query(Chat)
         .filter(Chat.member_id == member_id)

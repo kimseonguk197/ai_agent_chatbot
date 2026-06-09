@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text as sql_text
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from app.ai.rag.retriever import invalidate_bm25_cache
 from app.ai.rag.semantic_cache import semantic_cache
 
 from app import schemas
@@ -25,8 +24,6 @@ def add_documents(body: schemas.DocumentCreate, db: Session = Depends(get_db)):
     # add_texts()는 임베딩 생성 + langchain_pg_embedding 테이블에 저장
     vector_store.add_texts(chunk_texts)
 
-    # # 하이브리드 검색 : 새 문서 추가 시 BM25 캐시 무효화
-    # invalidate_bm25_cache()  
     return {"added": len(body.texts)}
 
 # 문서단위로 입력될 경우 : 청킹 설정
@@ -71,8 +68,5 @@ def upsert_document(chunk_id: str, body: schemas.DocumentChunkUpdate, db: Sessio
     # 4. Redis Semantic Cache flush
     # 청크 내용이 바뀌면 기존 캐시 응답이 outdated 될 수 있으므로 전체 삭제
     semantic_cache.flush()
-
-    # BM25 캐시 무효화 (Hybrid Search를 위해)
-    # invalidate_bm25_cache()
 
     return {"id": new_ids[0], "content": body.text}
