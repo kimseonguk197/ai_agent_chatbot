@@ -32,16 +32,16 @@ def create_chat(
         response_text = cached_response
 
     else:
-        # action = classify_message(body.message)
-        action = classify_message_langchain(body.message)
+        action = classify_message(body.message)
+        # action = classify_message_langchain(body.message)
         print(action)
         if action == "get_my_orders":
             orders = my_orders(db=db, current_member=current_member)
             print(orders)
             data = _format_orders(orders)
             print(data)
-            # response_text = generate_response(body.message, data)
-            response_text = generate_response_langchain(body.message, data)
+            response_text = generate_response(body.message, data)
+            # response_text = generate_response_langchain(body.message, data)
         # 민감정보의 경우 sLLM을 통해 응답생성
         elif action == "get_my_profile":
             member = my_page(current_member=current_member)
@@ -52,10 +52,10 @@ def create_chat(
         else:
             context = search_policy(body.message)
             # response_text = generate_response(body.message, context)
-            # response_text = generate_response_langchain(body.message, context)
-            # 최근대화고려 작업(Window Memory): 응답시 최근 5턴 대화 기록을 함께 전달
-            history = load_chat_history(current_member.id, db)
-            response_text = generate_response_langchain_memory(body.message, context, history)
+            response_text = generate_response_langchain(body.message, context)
+            # # 최근대화고려 작업(Window Memory): 응답시 최근 5턴 대화 기록을 함께 전달
+            # history = load_chat_history(current_member.id, db)
+            # response_text = generate_response_langchain_memory(body.message, context, history)
 
         # redis stack에 질문/응답을 저장
         # store: member_id 포함 (flush_by_member로 사용자별 선택 삭제 가능)

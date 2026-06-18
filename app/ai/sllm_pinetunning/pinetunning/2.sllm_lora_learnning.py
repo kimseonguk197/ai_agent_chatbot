@@ -34,7 +34,7 @@ def hf_login():
     else:
         print("[WARN] failed")
 
-# 2. 모델 / 토크나이저 로드 : 텍스트를 모델이 이해할 수 있는 숫자(토큰 ID)로 변환하는 도구
+# 2-1). 모델 / 토크나이저 로드 : 텍스트를 모델이 이해할 수 있는 숫자(토큰 ID)로 변환하는 도구
 def load_tokenizer():
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, use_fast=True)
 
@@ -46,7 +46,7 @@ def load_tokenizer():
     return tokenizer
 
 
-# 3. 기본 모델 불러오기
+# 2-2). 기본 모델 불러오기
 def load_base_model():
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_ID,
@@ -60,7 +60,7 @@ def load_base_model():
 
     return model
 
-# 4. 데이터 전처리 : 원본 컬럼(instruction, response) 제거 및 구조 변경
+# 2-3) 데이터 전처리 : 원본 컬럼(instruction, response) 제거 및 구조 변경
 def load_and_prepare_dataset(tokenizer):
     dataset = load_dataset("json", data_files=DATA_PATH)["train"]
     dataset = dataset.map(
@@ -82,9 +82,7 @@ def build_text(example, tokenizer):
     )
     return {"text": text}
 
-
-
-# 5. LoRA 학습
+# 2. LoRA 학습
 def train_lora():
     print("[INFO] Loading tokenizer...")
     tokenizer = load_tokenizer()
@@ -95,8 +93,10 @@ def train_lora():
     print("[INFO] Loading dataset...")
     dataset = load_and_prepare_dataset(tokenizer)
 
+    # 아래 LoraConfig와 SFTConfig는 대표적인 하이퍼파라미터(모델학습을 위해 개발자가 지정하는 값)
+
     # 어디(레이어)를 학습시킬지에 대한 설정
-    peft_config = LoraConfig(
+    lora_config = LoraConfig(
         r=32,               
         lora_alpha=128,     
         lora_dropout=0.05,
@@ -105,17 +105,17 @@ def train_lora():
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
     )
 
-    # 얼마나, 어떤 방식으로 학습할지
+    # 어느정도(얼마나)로, 어떤 방식으로 학습할지
     sft_config = SFTConfig(
         output_dir=ADAPTER_DIR,
-        num_train_epochs=10,
+        num_train_epochs=10,  #몇 번 반복해서 학습할지 결정
         per_device_train_batch_size=4,
         gradient_accumulation_steps=4,
         max_length=512, #입력데이터 최대 길이
         fp16=False,
         bf16=True,   # A4500 (Ampere 아키텍처)은 bf16 지원
-        dataloader_num_workers=4,   # 리눅스/맥, 윈도우는 보통 0
-        packing=False,              # 대규모 데이터 & pad가 있을땐 true 설정 
+        dataloader_num_workers=4,   
+        packing=False,            
         learning_rate=2e-4,
         logging_steps=1,
         save_strategy="epoch",
@@ -131,7 +131,7 @@ def train_lora():
         model=model,
         train_dataset=dataset,
         args=sft_config,
-        peft_config=peft_config,
+        peft_config=lora_config,
         processing_class=tokenizer,
     )
 
@@ -188,50 +188,11 @@ def merge_lora_to_base():
     del merged_model
     gc.collect()
 
-
-# 6. 간단 테스트
-def test_merged_model(prompt: str):
-    print("[INFO] Loading merged model for inference...")
-    tokenizer = AutoTokenizer.from_pretrained(MERGED_DIR, use_fast=True)
-    model = AutoModelForCausalLM.from_pretrained(
-        MERGED_DIR,
-        dtype=DTYPE,
-        low_cpu_mem_usage=True
-    )
-    model.to(DEVICE)
-    model.eval()
-
-    messages = [{"role": "user", "content": prompt}]
-    input_text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True
-    )
-
-    inputs = tokenizer(input_text, return_tensors="pt")
-    inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
-
-    with torch.no_grad():
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=128,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-            pad_token_id=tokenizer.eos_token_id
-        )
-
-    result = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    print("\n[TEST OUTPUT]")
-    print(result)
-
-
 # 0. 메인
 def main():
     hf_login()
     train_lora()
     merge_lora_to_base()
-    test_merged_model("배송비 얼마야?")
 
 if __name__ == "__main__":
     main()
