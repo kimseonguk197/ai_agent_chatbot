@@ -40,7 +40,7 @@ class SemanticCache:
             self.r = redis.Redis(
                 host=os.getenv("REDIS_HOST", "localhost"),
                 port=int(os.getenv("REDIS_PORT", 6379)),
-                decode_responses=False,
+                decode_responses=True,
             )
             self.r.ping()  # 연결확인
             # pgvector에 저장되는 모델과 동일한 모델설정.
